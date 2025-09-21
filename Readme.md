@@ -15,7 +15,7 @@ This demo should show the full, end-to-end "meta" workflow: the AI Assistant bui
 
 The entire system is designed to showcase its power by executing a "meta" workflow—using the platform's own standard building blocks to automate the creation and onboarding of a new integration for itself.
 
-**User Command:** "Onboard the new 'Simple CRM' API. The OpenAPI spec is at http://crm-api:8055/server/specs/oas. After scaffolding the integration, create a health check monitor for its /users endpoint, create a Planka card for the 'Integration Review' board, and notify the \#integrations channel in Slack."
+**User Command:** "Onboard the new 'Simple CRM' API. The OpenAPI spec is at http://crm-api:8055/server/specs/oas. After scaffolding the integration, create a health check monitor for its /users endpoint, create a Focalboard card for the 'Integration Review' board, and notify the \#integrations channel in Slack."
 
 ## **🏗️ System Architecture**
 
@@ -29,7 +29,7 @@ The platform runs as a self-contained set of services managed by Docker Compose.
 | **Central Database**    | **PostgreSQL**       | Stores workflow definitions and the Python code for all integrations.    |
 | **Example Target API**  | **Directus**         | A sample service providing an OpenAPI spec for the demo workflow.        |
 | **Code Source Control** | **Gitea**            | The Git service where the AI commits scaffolded code for human review.   |
-| **Project Management**  | **Planka**           | Kanban board used to manage the integration approval lifecycle.          |
+| **Project Management**  | **Focalboard**       | Kanban board for managing the integration approval lifecycle.            |
 | **Artifact Store**      | **MinIO (S3)**       | Stores the final, versioned integration "artifact" ready for deployment. |
 
 ## **⚙️ Key Mechanisms & Concepts**
@@ -42,7 +42,7 @@ In our showcase workflow, this action should be configured to act as a **code ge
 
 #### **2\. The AI Assistant Workflow Builder**
 
-To create workflows, users interact with an AI Assistant. This assistant takes a high-level goal (like the user command above) and translates it into the platform's structured JSON workflow format. It intelligently selects from the library of available actions (like the AI Call action, Gitea actions, Planka actions, etc.) to construct the final blueprint.
+To create workflows, users interact with an AI Assistant. This assistant takes a high-level goal (like the user command above) and translates it into the platform's structured JSON workflow format. It intelligently selects from the library of available actions (like the AI Call action, Gitea actions, Focalboard actions, etc.) to construct the final blueprint.
 
 #### **3\. The Deployment Pipeline (Simulated via Django Command)**
 
@@ -51,7 +51,7 @@ To avoid the complexity of a dedicated CI/CD service, this project simulates the
 ```
 # This command takes the code from a Gitea repo, packages it,
 # uploads it to S3, and registers it in the database.
-python manage.py deploy_integration \--repo-url \<gitea-repo-url\>
+python manage.py deploy_integration --repo-url <gitea-repo-url>
 ```
 
 #### **4\. Stateless Runtime & Integration Loading**
@@ -69,7 +69,7 @@ This architecture allows the Celery worker fleet to be scaled horizontally witho
 An integration is not made live until it passes a human review and is explicitly deployed.
 
 1. **Review**: A developer reviews the AI-generated code in the Gitea repository.
-2. **Approval**: To signify approval, the developer moves the corresponding task card in Planka to the "Done" list.
+2. **Approval**: To signify approval, the developer moves the corresponding task card in Focalboard to the "Done" list.
 3. **Activation**: The developer then manually runs the deploy_integration Django command. This command is the single point of activation: it packages the code, uploads it to the artifact store, registers it in the database, and sets `is_active = true`, making the integration live on the platform.
 
 ## **🚀 Implementation Plan**
@@ -78,11 +78,11 @@ This project will be built in distinct phases, each with a clear, demonstrable g
 
 #### **Phase 0: Infrastructure Foundation**
 
-- **Goal:** Launch and connect all required services (Django, Celery, PostgreSQL, Gitea, Planka, MinIO, Directus) using a single docker-compose up command. This phase establishes a stable development environment.
+- **Goal:** Launch and connect all required services (Django, Celery, PostgreSQL, Gitea, Focalboard, MinIO, Directus) using a single docker-compose up command. This phase establishes a stable development environment.
 
 #### **Phase 1: Core Orchestration Engine**
 
-- **Goal:** Prove the core mechanics by executing a hardcoded, multi-step workflow (e.g., create a Gitea repo, then a Planka card) triggered by a single API call. This validates the Celery task runner and inter-service communication.
+- **Goal:** Prove the core mechanics by executing a hardcoded, multi-step workflow (e.g., create a Gitea repo, then a Focalboard card) triggered by a single API call. This validates the Celery task runner and inter-service communication.
 
 #### **Phase 2: The Generic "AI Call" Action**
 
