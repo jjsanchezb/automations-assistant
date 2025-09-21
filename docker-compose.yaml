@@ -19,7 +19,12 @@ services:
     restart: unless-stopped
 
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     command: python manage.py runserver 0.0.0.0:8000
     # Run the container as the non-root user with UID/GID 1000.
     # This user must be created in your Dockerfile first.
@@ -38,7 +43,12 @@ services:
     restart: unless-stopped
 
   celery:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     command: celery -A automata worker -l info
     # Also run the celery worker as the same non-root user.
     user: "1000:1000"
