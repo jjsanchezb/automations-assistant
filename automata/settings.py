@@ -144,6 +144,9 @@ STORAGES = {
             "AWS_STORAGE_BUCKET_NAME": os.getenv("APP_STORAGE_BUCKET_NAME"),
         },
     },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
 }
 
 
