@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "storages",
     "rest_framework",
 ]
 
@@ -132,3 +133,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 #
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+
+# Django Storages
+#
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "AWS_STORAGE_BUCKET_NAME": os.getenv("APP_STORAGE_BUCKET_NAME"),
+        },
+    },
+}
+
+
+AWS_S3_ENDPOINT_URL = os.getenv("APP_STORAGE_ENDPOINT_URL")
+AWS_S3_ACCESS_KEY_ID = os.getenv("APP_STORAGE_ACCESS_KEY_ID")
+AWS_S3_SECRET_ACCESS_KEY = os.getenv("APP_STORAGE_SECRET_ACCESS_KEY")
+AWS_S3_SIGNATURE_VERSION = "s3v4"

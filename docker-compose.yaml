@@ -6,15 +6,15 @@ services:
       - postgres_data:/var/lib/postgresql/data/
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     environment:
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - DIRECTUS_DB_NAME=${DIRECTUS_DB_NAME}
-      - DIRECTUS_DB_USER=${DIRECTUS_DB_USER}
-      - DIRECTUS_DB_PASSWORD=${DIRECTUS_DB_PASSWORD}
-      - GITEA_DB_NAME=${GITEA_DB_NAME}
-      - GITEA_DB_USER=${GITEA_DB_USER}
-      - GITEA_DB_PASSWORD=${GITEA_DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:?err}
+      - POSTGRES_USER=${POSTGRES_USER:?err}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?err}
+      - DIRECTUS_DB_NAME=${DIRECTUS_DB_NAME:?err}
+      - DIRECTUS_DB_USER=${DIRECTUS_DB_USER:?err}
+      - DIRECTUS_DB_PASSWORD=${DIRECTUS_DB_PASSWORD:?err}
+      - GITEA_DB_NAME=${GITEA_DB_NAME:?err}
+      - GITEA_DB_USER=${GITEA_DB_USER:?err}
+      - GITEA_DB_PASSWORD=${GITEA_DB_PASSWORD:?err}
     restart: none
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
@@ -85,13 +85,13 @@ services:
       - "3000:3000"
       - "2222:22"
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
+      - USER_UID=${UID:-1000}
+      - USER_GID=${UID:-1000}
       - GITEA__database__DB_TYPE=postgres
       - GITEA__database__HOST=postgres:5432
-      - GITEA__database__NAME=${GITEA_DB_NAME}
-      - GITEA__database__USER=${GITEA_DB_USER}
-      - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
+      - GITEA__database__NAME=${GITEA_DB_NAME:?err}
+      - GITEA__database__USER=${GITEA_DB_USER:?err}
+      - GITEA__database__PASSWD=${GITEA_DB_PASSWORD:?err}
       - GITEA__server__ROOT_URL=http://localhost:3000
     depends_on:
       postgres:
@@ -113,11 +113,35 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?err}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?err}
     volumes:
       - minio_data:/data
     restart: none
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    command: /init-minio.sh
+    volumes:
+      - ./init-minio.sh:/init-minio.sh
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: none
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:?err}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:?err}
+      - APP_STORAGE_BUCKET_NAME=${APP_STORAGE_BUCKET_NAME:?err}
+      - APP_STORAGE_ACCESS_KEY_ID=${APP_STORAGE_ACCESS_KEY_ID:?err}
+      - APP_STORAGE_SECRET_ACCESS_KEY=${APP_STORAGE_SECRET_ACCESS_KEY:?err}
+    profiles:
+      - init
 
   # --- Example Target API (Simple CRM) -----------------------------------
   directus:
@@ -125,16 +149,16 @@ services:
     ports:
       - "8055:8055"
     environment:
-      - KEY=${DIRECTUS_KEY}
-      - SECRET=${DIRECTUS_SECRET}
-      - ADMIN_EMAIL=${DIRECTUS_ADMIN_EMAIL}
-      - ADMIN_PASSWORD=${DIRECTUS_ADMIN_PASSWORD}
+      - KEY=${DIRECTUS_KEY:?err}
+      - SECRET=${DIRECTUS_SECRET:?err}
+      - ADMIN_EMAIL=${DIRECTUS_ADMIN_EMAIL:?err}
+      - ADMIN_PASSWORD=${DIRECTUS_ADMIN_PASSWORD:?err}
       - DB_CLIENT=pg
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_DATABASE=${DIRECTUS_DB_NAME}
-      - DB_USER=${DIRECTUS_DB_USER}
-      - DB_PASSWORD=${DIRECTUS_DB_PASSWORD}
+      - DB_DATABASE=${DIRECTUS_DB_NAME:?err}
+      - DB_USER=${DIRECTUS_DB_USER:?err}
+      - DB_PASSWORD=${DIRECTUS_DB_PASSWORD:?err}
     depends_on:
       postgres:
         condition: service_healthy
