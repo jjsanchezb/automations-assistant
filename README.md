@@ -36,7 +36,7 @@ The platform runs as a self-contained set of services managed by Docker Compose.
 
 #### **1\. The Generic "AI Call" Action**
 
-The platform includes a standard, reusable AI Call action. Unlike a simple LLM call, this action is a powerful building block that can be configured with specific system prompts, user prompts, and even a set of "tools" to structure its output.
+The platform includes a standard, reusable AI Call action. This action is a powerful building block that can be configured with specific system prompts, user prompts, and a set of "tools" to structure its output.
 
 In our showcase workflow, this action should be configured to act as a **code generator**. It's given a system prompt that instructs it to parse an OpenAPI specification and a user prompt containing the spec's URL. The result is a structured JSON object containing the generated Python code and a list of dependencies.
 
@@ -46,7 +46,7 @@ To create workflows, users interact with an AI Assistant. This assistant takes a
 
 #### **3\. The Deployment Pipeline (Simulated via Django Command)**
 
-To avoid the complexity of a dedicated CI/CD service, this project simulates the deployment pipeline with a Django management command. This command is responsible for bridging the gap between development (Gitea) and production (the live platform).
+This project simulates a CI/CD deployment pipeline with a Django management command. This command is responsible for bridging the gap between development (Gitea) and production (the live platform).
 
 ```
 # This command takes the code from a Gitea repo, packages it,
@@ -71,6 +71,28 @@ An integration is not made live until it passes a human review and is explicitly
 1. **Review**: A developer reviews the AI-generated code in the Gitea repository.
 2. **Approval**: To signify approval, the developer moves the corresponding task card in Focalboard to the "Done" list.
 3. **Activation**: The developer then manually runs the deploy_integration Django command. This command is the single point of activation: it packages the code, uploads it to the artifact store, registers it in the database, and sets `is_active = true`, making the integration live on the platform.
+
+#### **5\. Graph-Based Workflows**
+
+Workflows are modeled as directed graphs, This allows for powerful and flexible orchestration, including branching (if/else), parallel execution, and merging. The graph is defined by two tables: WorkflowStep (nodes) and WorkflowEdge (connections), enabling the platform to validate against issues like infinite loops or dead ends.
+
+#### **6\. Stateless Choreographed Execution Engine**
+
+The platform does not use a long-running "engine" process. Instead, it uses a stateless choreography pattern (a "relay race").
+
+- A central Dispatcher initiates a workflow by dispatching the first task to Celery.
+
+- Each Celery task is a short-lived, independent "runner" that executes a single step.
+
+- Upon completion, each task is responsible for evaluating the workflow graph and dispatching the next task(s) in the sequence. This makes the system highly scalable and resilient.
+
+#### **7\. Snapshotting for Auditing and Reliability**
+
+When a workflow is executed, the system takes a complete, immutable snapshot of the workflow's definition (all its steps, edges, and inputs) and stores it in the WorkflowRun record. The execution engine uses this snapshot, not the live workflow definition. This critical feature ensures that:
+
+- Historical accuracy is maintained, even if the main workflow is edited later.
+
+- The execution is decoupled and reliable, unaffected by simultaneous user edits.
 
 ## **🚀 Implementation Plan**
 
