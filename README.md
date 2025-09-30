@@ -32,6 +32,34 @@ The platform runs as a self-contained set of services managed by Docker Compose.
 | **Project Management**  | **Focalboard**       | Kanban board for managing the integration approval lifecycle.            |
 | **Artifact Store**      | **MinIO (S3)**       | Stores the final, versioned integration "artifact" ready for deployment. |
 
+## **🏛️ Core Application Definitions**
+
+This section provides formal definitions for the core entities and abstractions that constitute the Automata application. Understanding these definitions is key to understanding the platform's architecture and data model.
+
+### **The Workflow Model: A Directed Graph**
+
+At its core, a Workflow is defined as a directed graph, providing a flexible and powerful way to model complex business logic.
+
+- **Nodes**: The nodes of the graph are defined as **Workflow Steps**. Each step is a distinct unit of work, such as an **Integration Action** (a function call) or an **Integration Trigger** (an event that starts a workflow).
+
+- **Edges**: The connections between nodes are defined as **Workflow Edges**. They dictate the sequence of execution and allow for sophisticated control flow patterns like branching and parallel execution.
+
+### **The Integration Model: The Bridge to External Services**
+
+An **Integration** is defined as the component that connects Automata to an external service (e.g., Gitea, Focalboard). It serves as a container for **Integration Source Code** and exposes a set of callable actions. This separation of concerns allows the core workflow engine to remain generic.
+
+#### **Code Storage & Execution: A Decoupled, Secure Approach**
+
+**Source Code Storage** and **Execution Runtime** are the two key abstractions that define where integration code lives and how it is executed. This decoupled design provides flexibility and enables sandboxed execution for security.
+
+- **Source Code Storage**: Defines where an integration's Python code is stored. Supported types include:
+  - **In-App Module**: For core, trusted integrations bundled directly with the platform.
+  - **S3 Bucket Artifact**: For dynamically added integrations, where code is stored as a versioned artifact in an object store.
+
+- **Execution Runtime**: Defines how the code is executed by a Celery worker. To mitigate risks, the platform is designed to use sandboxing runtimes:
+  - **Direct Import** (importlib): A non-sandboxed method suitable only for trusted In-App Modules.
+  - **Process-Based Sandbox** (subprocess): A secure baseline where code runs in an isolated child process.
+
 ## **⚙️ Key Mechanisms & Concepts**
 
 #### **1\. The Generic "AI Call" Action**
