@@ -17,7 +17,7 @@ class Integration(models.Model):
 class IntegrationAction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid7)
     name = models.CharField(max_length=100)
-    integration = models.ForeignKey(Integration, on_delete=models.CASCADE)
+    integration = models.ForeignKey(Integration, on_delete=models.CASCADE, related_name="actions")
     is_active = models.BooleanField(default=False)
     entrypoint_function = models.CharField(max_length=100)
     input_schema = models.JSONField(null=True, default=None)
@@ -28,7 +28,7 @@ class IntegrationAction(models.Model):
 class IntegrationTrigger(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid7)
     name = models.CharField(max_length=100)
-    integration = models.ForeignKey(Integration, on_delete=models.CASCADE)
+    integration = models.ForeignKey(Integration, on_delete=models.CASCADE, related_name="triggers")
     is_active = models.BooleanField(default=False)
     entrypoint_function = models.CharField(max_length=100)
     input_schema = models.JSONField(null=True, default=None)
