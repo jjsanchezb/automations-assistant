@@ -31,7 +31,7 @@ services:
       timeout: 5s # Wait up to 5 seconds for a response
       retries: 3 # Try 3 times before marking as unhealthy
 
-  web:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -72,7 +72,7 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      web:
+      app:
         condition: service_started
     restart: none
 
