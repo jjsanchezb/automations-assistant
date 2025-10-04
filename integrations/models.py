@@ -7,7 +7,7 @@ from .choices import RuntimeChoices, SourceCodeLocation
 class Integration(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid7)
     key = models.CharField(max_length=100)
-    version = models.CharField(max_length=50, default="1.0.0")
+    version = models.PositiveIntegerField()
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=False)
