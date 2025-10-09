@@ -48,6 +48,32 @@ At its core, a Workflow is defined as a directed graph, providing a flexible and
 
 An **Integration** is defined as the component that connects Automata to an external service (e.g., Gitea, Focalboard). It serves as a container for **Integration Source Code** and exposes a set of callable actions. This separation of concerns allows the core workflow engine to remain generic.
 
+### **Key Data Modeling Patterns and Decisions**
+
+To achieve a balance of flexibility, performance, and data integrity, the platform's data model is built on several modern design patterns.
+
+#### **1. Aggregate Creation for Integrations**
+
+While `Integration`, `IntegrationAction`, and `IntegrationTrigger` are stored as separate, normalized models in the database, they are treated as a single "aggregate" unit by the API. A user can create a complete integration—including all its actions and triggers—with a single API request. This provides a superior user experience and is handled by nested serializers that orchestrate the creation of the related database objects.
+
+#### **2. JSON Fields for Workflow Graphs**
+
+Instead of a rigid relational schema with `WorkflowStep` and `WorkflowEdge` tables, a workflow's entire graph structure (its nodes and edges) is stored within a single **`JSONField`** on the `Workflow` model. This approach offers two key advantages:
+
+- **Flexibility**: The structure of the graph can evolve without requiring complex database migrations.
+- **Performance**: It eliminates the need for expensive and complex SQL joins to load a complete workflow definition. The structure of this JSON data is rigorously validated on save using **Pydantic models** to ensure data integrity.
+
+#### **3. Immutable Versioning for Workflows**
+
+Workflows are never updated in place (`UPDATE`). When a user edits a workflow, the system creates a **new `Workflow` record**, effectively creating a new, immutable version. This critical design choice provides:
+
+- A complete **audit trail** of how a workflow has changed over time.
+- Guarantees that long-running workflow executions are not affected by subsequent edits.
+
+#### **4. Execution Snapshots via Foreign Key**
+
+The `WorkflowRun` model, which tracks a live execution, implements its "snapshot" mechanism via a direct **`ForeignKey` relationship** to the specific, immutable `Workflow` version it was triggered from. The execution engine exclusively references the graph data from that versioned record, ensuring that every run is predictable, auditable, and completely decoupled from any subsequent edits to the workflow.
+
 #### **Code Storage & Execution: A Decoupled, Secure Approach**
 
 **Source Code Storage** and **Execution Runtime** are the two key abstractions that define where integration code lives and how it is executed. This decoupled design provides flexibility and enables sandboxed execution for security.
@@ -102,7 +128,7 @@ An integration is not made live until it passes a human review and is explicitly
 
 #### **5\. Graph-Based Workflows**
 
-Workflows are modeled as directed graphs, This allows for powerful and flexible orchestration, including branching (if/else), parallel execution, and merging. The graph is defined by two tables: WorkflowStep (nodes) and WorkflowEdge (connections), enabling the platform to validate against issues like infinite loops or dead ends.
+Workflows are modeled conceptually as directed graphs. This allows for powerful and flexible orchestration, including branching (if/else), parallel execution, and merging.
 
 #### **6\. Stateless Choreographed Execution Engine**
 
