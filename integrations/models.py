@@ -1,7 +1,7 @@
 import uuid_utils as uuid
 from django.db import models
 
-from .choices import RuntimeChoices, SourceCodeLocation
+from .choices import RuntimeChoices
 
 
 class Integration(models.Model):
@@ -9,10 +9,9 @@ class Integration(models.Model):
     key = models.CharField(max_length=100)
     version = models.PositiveIntegerField()
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, default='')
     is_active = models.BooleanField(default=False)
-    source_code_location = models.CharField(max_length=255, choices=SourceCodeLocation.choices, default=SourceCodeLocation.S3_ARTIFACT)
-    source_code_path = models.CharField(max_length=100, null=True)
+    source_code = models.FileField(upload_to="integrations/source_code/", null=True)
     runtime = models.CharField(max_length=100, choices=RuntimeChoices.choices, default=RuntimeChoices.SUBPROCESS)
 
     class Meta:
@@ -25,11 +24,11 @@ class IntegrationAction(models.Model):
     key = models.CharField(max_length=100)
     integration = models.ForeignKey(Integration, on_delete=models.CASCADE, related_name="actions")
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, default='')
     is_active = models.BooleanField(default=False)
     entrypoint_function = models.CharField(max_length=100)
-    input_schema = models.JSONField(null=True, default=None)
-    output_schema = models.JSONField(null=True, default=None)
+    input_schema = models.JSONField(blank=True, null=True)
+    output_schema = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = ("integration", "key")
@@ -40,11 +39,11 @@ class IntegrationTrigger(models.Model):
     key = models.CharField(max_length=100)
     integration = models.ForeignKey(Integration, on_delete=models.CASCADE, related_name="triggers")
     name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, default='')
     is_active = models.BooleanField(default=False)
     entrypoint_function = models.CharField(max_length=100)
-    input_schema = models.JSONField(null=True, default=None)
-    output_schema = models.JSONField(null=True, default=None)
+    input_schema = models.JSONField(blank=True, null=True)
+    output_schema = models.JSONField(blank=True, null=True)
 
     class Meta:
         unique_together = ("integration", "key")
