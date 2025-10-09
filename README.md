@@ -40,7 +40,7 @@ This section provides formal definitions for the core entities and abstractions 
 
 At its core, a Workflow is defined as a directed graph, providing a flexible and powerful way to model complex business logic.
 
-- **Nodes**: The nodes of the graph are defined as **Workflow Steps**. Each step is a distinct unit of work, such as an **Integration Action** (a function call) or an **Integration Trigger** (an event that starts a workflow).
+- **Nodes**: The nodes of the graph are defined as **Workflow Steps**. Each step is a distinct unit of work, such as an **Integration Action** (a function call), an **Integration Trigger** (an event that starts a workflow), or a **Condition** (for branching logic).
 
 - **Edges**: The connections between nodes are defined as **Workflow Edges**. They dictate the sequence of execution and allow for sophisticated control flow patterns like branching and parallel execution.
 
